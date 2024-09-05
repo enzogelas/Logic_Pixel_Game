@@ -1,0 +1,17 @@
+{
+  "name": "logic_pixel",
+  "version": "1.0.0",
+  "description": "To play to the game : \r - In the folder Apple_Snake_Game, execute node server.js\r - In your favorite browser, go the http://localhost:8000\r - Enjoy !!",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "fs": "^0.0.1-security"
+  }
+}
