@@ -13,8 +13,21 @@
                 <button id="returnToLevels">Return to levels</button>
                 <button>Useless button</button>
             </div>
-            <canvas id="gameCanvas" width="600" height="400"></canvas>
-            <script src="game.js"></script>
+            <div style="height: 100px;"></div>
+            <div id="game-container">
+                <!-- Numbers displayed on columns, horizontally above -->
+                <div id="column-clues"></div>
+                
+
+                <!-- NUmbers displayed on rows, vertically, at the left -->
+                <div id="row-clues"></div>
+                
+
+                <canvas id="gameCanvas"></canvas>
+                
+            </div>
+            <div style="height: 100px;"></div>
         </div>
+        <script src="game.js"></script>
     </body>
 </html>

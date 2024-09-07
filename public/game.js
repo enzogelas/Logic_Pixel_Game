@@ -6,7 +6,7 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 // Data on grid
-const gridSize = 40;
+const gridSize = 30;
 
 // Dimensions of the grid
 let tilesOnRow = 0;
@@ -17,11 +17,20 @@ let tilesOnColumn = 0;
 let gameGrid;
 
 // The clue numbers displayed on lines and columns
-let numbersOnColumns;
-let numbersOnRows;
+let cluesOnColumns;
+let cluesOnRows;
 
 // The current grid for the player
 let currentGrid;
+
+const colors = [
+    "white", // 0 : blank
+    "black", // 1 : full
+    "red",   // 2 : cross
+    "lightblue" // 3 : mouseover
+]
+
+let currentFill = 1;
 
 function drawGrid(){
     for(let i=0; i<=tilesOnRow; i++){
@@ -38,37 +47,69 @@ function drawGrid(){
     ctx.stroke();
 }
 
-let currentX = -1;
-let currentY = -1;
+function fillGrid() {
+    for (let i=0 ; i<tilesOnRow ; i++){
+        for (let j=0 ; j<tilesOnColumn ; j++){
+            drawSquare(i, j, colors[currentGrid[j][i]]);
+        }
+    }
+}
+
+function drawSquare(x, y, color){
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = color;
+    ctx.fillRect(x*gridSize, y*gridSize, gridSize, gridSize);
+    ctx.strokeRect(x*gridSize, y*gridSize, gridSize, gridSize);
+}
+
+let currentX = 0;
+let currentY = 0;
 
 canvas.addEventListener("mousemove", (p) => {
     const xCoord = Math.floor(p.offsetX / gridSize);
     const yCoord = Math.floor(p.offsetY / gridSize);
-    // console.log(xCoord, yCoord);
 
     if(xCoord != currentX || yCoord != currentY){
-        ctx.strokeStyle = "black";
-        ctx.fillStyle = "white";
-        ctx.fillRect(currentX*gridSize, currentY*gridSize, gridSize, gridSize)
-        ctx.strokeRect(currentX*gridSize, currentY*gridSize, gridSize, gridSize)
-        ctx.fillStyle = "blue";
-        ctx.fillRect(xCoord*gridSize, yCoord*gridSize, gridSize, gridSize);
-        ctx.strokeRect(xCoord*gridSize, yCoord*gridSize, gridSize, gridSize);
+        //console.log(xCoord, yCoord);
+
+        // Draw the new square
+        drawSquare(xCoord, yCoord, "lightblue");
+        // Restore the ancient square
+        drawSquare(currentX, currentY, colors[currentGrid[currentY][currentX]]);
+        
+        // Update the new coordinates
         currentX = xCoord;
         currentY = yCoord;
+    
     }   
     
 })
 
 canvas.addEventListener("click", (p) => {
-    // TEMPORARY //
-    ///////////////
     const xCoord = Math.floor(p.offsetX / gridSize);
     const yCoord = Math.floor(p.offsetY / gridSize);
-    ctx.fillStyle = "black";
-    ctx.fillRect(xCoord*gridSize, yCoord*gridSize, gridSize, gridSize);
-    ///////////////
-    // TEMPORARY //
+
+    // The current color of the tile where you click
+    const currentTileColor = currentGrid[yCoord][xCoord];
+
+    // To fill a tile
+    if(currentFill == 1){
+
+        if(currentTileColor == 0) currentGrid[yCoord][xCoord] = 1;
+        else if(currentTileColor == 1) currentGrid[yCoord][xCoord] = 0;
+      
+    // To cross a tile
+    } else if(currentFill == 2) {
+
+        if(currentTileColor == 0) currentGrid[yCoord][xCoord] = 2;
+        else if (currentTileColor == 2) currentGrid[yCoord][xCoord] = 0;
+
+    }
+    
+    console.log(currentGrid);
+    
+    // Refill the grid with the correct colors
+    fillGrid();
 })
 
 // functions to charge the level
@@ -85,9 +126,20 @@ function getLevel(){
             tilesOnColumn = data.heigth;
             console.log("This level dimensions are", tilesOnRow, tilesOnColumn);
 
+            // Redimensioning the div containing the canvas
+            const gameContainer = document.getElementById("game-container");
+            gameContainer.width = tilesOnRow * gridSize;
+            gameContainer.height = tilesOnColumn * gridSize;
+
             // Redimensioning the canvas
             canvas.width = tilesOnRow * gridSize;
             canvas.height = tilesOnColumn * gridSize;
+
+            // Redimensioning the spaces for the column and row clues
+            const rowClues = document.getElementById("row-clues");
+            const columnClues = document.getElementById("column-clues");
+            rowClues.style.height = canvas.height;
+            columnClues.style.width = canvas.width;
 
             console.log("Canvas width and height :", canvas.width, canvas.height);
 
@@ -98,20 +150,20 @@ function getLevel(){
             // Computing the clue numbers displayed on the rows and columns
 
             // Clues on rows
-            numbersOnRows = new Array(tilesOnColumn);
+            cluesOnRows = new Array(tilesOnColumn);
             for(let j = 0; j<tilesOnColumn; j++){
                 let currentBlock = 0;
-                numbersOnRows[j] = new Array();
+                cluesOnRows[j] = new Array();
                 for(let i = 0; i<tilesOnRow; i++){
                     if (gameGrid[j][i] == 1){
                         currentBlock++;
                         if (i == tilesOnRow-1){
-                            numbersOnRows[j].push(currentBlock);
+                            cluesOnRows[j].push(currentBlock);
                             currentBlock = 0;
                         }
                     } else {
                         if (currentBlock > 0){
-                            numbersOnRows[j].push(currentBlock);
+                            cluesOnRows[j].push(currentBlock);
                             currentBlock = 0;
                         }
                     }
@@ -120,43 +172,77 @@ function getLevel(){
             }
 
             // Clues on columns
-            numbersOnColumns = new Array(tilesOnRow);
+            cluesOnColumns = new Array(tilesOnRow);
             for(let i = 0; i<tilesOnRow; i++){
                 let currentBlock = 0;
-                numbersOnColumns[i] = new Array();
+                cluesOnColumns[i] = new Array();
                 for(let j = 0; j<tilesOnColumn; j++){
                     if(gameGrid[j][i] == 1){
                         currentBlock++;
                         if(j == tilesOnColumn-1){
-                            numbersOnColumns[i].push(currentBlock);
+                            cluesOnColumns[i].push(currentBlock);
                             currentBlock = 0;
                         }
                     } else {
                         if (currentBlock > 0){
-                            numbersOnColumns[i].push(currentBlock);
+                            cluesOnColumns[i].push(currentBlock);
                             currentBlock = 0;
                         }
                     }
                 }
             }
             
-            console.log(numbersOnRows);
-            console.log(numbersOnColumns);
+            console.log(cluesOnRows);
+            console.log(cluesOnColumns);
+
+            // Creating the clues display
+            // for columns (horizontally)
+            for(let i=0 ; i<tilesOnRow ; i++){
+                const clue = document.createElement("div");
+                clue.className = "one-column-clues";
+
+                clue.style.width = gridSize;
+                // Nothing on height cause it is filled vertically
+                
+                cluesOnColumns[i].forEach((nb) => {
+                    const part = document.createElement("div");
+                    part.className = "part-of-clue";
+                    part.style.width = gridSize;
+                    part.style.height = gridSize;
+                    part.textContent = nb.toString();
+                    clue.appendChild(part);
+                });
+
+                columnClues.appendChild(clue);
+            }
+            // and for rows (vertically)
+            for(let j=0 ; j<tilesOnColumn ; j++){
+                const clue = document.createElement("div");
+                clue.className = "one-row-clues";
+
+                clue.style.height = gridSize;
+                // Nothing on width cause it is filled horizontally
+                
+                cluesOnRows[j].forEach((nb) => {
+                    const part = document.createElement("div");
+                    part.className = "part-of-clue";
+                    part.style.width = gridSize;
+                    part.style.height = gridSize;
+                    part.textContent = nb.toString();
+                    clue.appendChild(part);
+                });
+
+                rowClues.appendChild(clue);
+            }
 
             // Creating the blank current grid
-            currentGrid = new Array(tilesOnRow);
-
-            for (let i = 0; i < tilesOnRow; i++) {
-                currentGrid[i] = new Array(tilesOnColumn);
-                for (let j = 0; j < tilesOnColumn; j++) {
-                    currentGrid[i][j] = 0;
-                }
-            }
+            currentGrid = Array.from(Array(tilesOnColumn), () => new Array(tilesOnRow).fill(0));
 
             console.log(currentGrid);
 
             // Constructing the grid background
             drawGrid();
+            fillGrid();
         }
     }
 
