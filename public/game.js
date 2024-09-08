@@ -126,11 +126,6 @@ function getLevel(){
             tilesOnColumn = data.heigth;
             console.log("This level dimensions are", tilesOnRow, tilesOnColumn);
 
-            // Redimensioning the div containing the canvas
-            const gameContainer = document.getElementById("game-container");
-            gameContainer.width = tilesOnRow * gridSize;
-            gameContainer.height = tilesOnColumn * gridSize;
-
             // Redimensioning the canvas
             canvas.width = tilesOnRow * gridSize;
             canvas.height = tilesOnColumn * gridSize;
@@ -194,6 +189,20 @@ function getLevel(){
             
             console.log(cluesOnRows);
             console.log(cluesOnColumns);
+
+            // IMPORTANT //
+            ///////////////
+            // The left of the grid (without clues) is aligned with center. 
+            // Here we create an offset to align GRID AND CLUES with center
+            const maxNbCluesOnColumns = Math.max(...cluesOnColumns.map(arr => arr.length));
+            const maxNbCluesOnRows = Math.max(...cluesOnRows.map(arr => arr.length));
+
+            const gameContainer = document.getElementById("game-container");
+            gameContainer.style.left = Math.floor((maxNbCluesOnRows*gridSize - canvas.width)/2) + "px";
+            gameContainer.style.top = Math.floor(maxNbCluesOnColumns*gridSize/2) + "px";
+
+            ///////////////
+            // IMPORTANT //
 
             // Creating the clues display
             // for columns (horizontally)
