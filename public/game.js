@@ -31,7 +31,6 @@ const colors = [
     {"type": "color", data:"white"}, // 0 : blank
     {"type": "color", data:"black"}, // 1 : full
     {"type": "image", data:crossImage},   // 2 : cross
-    {"type": "color", data:"lightblue"} // 3 : mouseover
 ]
 
 function drawRails(){
