@@ -23,14 +23,12 @@ body {
 #buttonsDiv {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-around;
     align-items: flex-start;
     flex-wrap: wrap;
 
     width: 100%;
     height: min-content;
-    
-    margin: 20px;
 
     gap: 20px;
 }

@@ -42,7 +42,7 @@ app.get("/getLevel", (req,res) => {
     fs.readFile(levelFile, 'utf8', (err, data) => {
         if(err) {
             console.log("Level",currentLevel,"is not defined yet !");
-            res.end("");
+            res.end("{}");
         } else {
             res.end(data);
         }       

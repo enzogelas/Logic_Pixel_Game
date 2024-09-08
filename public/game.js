@@ -34,19 +34,41 @@ const colors = [
     {"type": "color", data:"lightblue"} // 3 : mouseover
 ]
 
-function drawGrid(){
+function drawRails(){
+    ctx.lineWidth = 2;
+
     for(let i=0; i<=tilesOnRow; i++){
-        ctx.moveTo(i*gridSize, 0);
-        ctx.lineTo(i*gridSize, tilesOnColumn*gridSize);
+        
+        ctx.beginPath();
+
+        if (i % 5 == 0) {
+            ctx.strokeStyle = "#222";
+        } else {
+            ctx.strokeStyle = "darkgray";
+        }
+
+        // Draw vertical lines
+        ctx.moveTo(i * gridSize, 0);
+        ctx.lineTo(i * gridSize, tilesOnColumn * gridSize);
+
+        ctx.stroke();
     }
     for(let j=0; j<=tilesOnColumn; j++){
+
+        ctx.beginPath();
+
+        if (j % 5 == 0) {
+            ctx.strokeStyle = "#222";
+        } else {
+            ctx.strokeStyle = "darkgray";
+        }
+
         ctx.moveTo(0, j*gridSize);
         ctx.lineTo(tilesOnRow*gridSize, j*gridSize);
+
+        ctx.stroke();
     }
 
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "black";
-    ctx.stroke();
 }
 
 function fillGrid() {
@@ -55,15 +77,16 @@ function fillGrid() {
             drawSquare(i, j, colors[currentGrid[j][i]]);
         }
     }
+    drawRails();
 }
 
 function drawSquare(x, y, color){
     if(color.type == "color"){
-        ctx.strokeStyle = "black";
         ctx.fillStyle = color.data;
         ctx.fillRect(x*gridSize, y*gridSize, gridSize, gridSize);
-        ctx.strokeRect(x*gridSize, y*gridSize, gridSize, gridSize);
     } else if (color.type == "image"){
+        ctx.fillStyle = "white";
+        ctx.fillRect(x*gridSize, y*gridSize, gridSize, gridSize);
         ctx.drawImage(color.data, x*gridSize, y*gridSize, gridSize, gridSize)
     }
 }
@@ -72,49 +95,85 @@ function drawSquare(x, y, color){
 let currentX = 0;
 let currentY = 0;
 
-canvas.addEventListener("mousemove", (p) => {
-    const xCoord = Math.floor(p.offsetX / gridSize);
-    const yCoord = Math.floor(p.offsetY / gridSize);
+let mouseIn = false;
+let mousePressed = false;
 
-    if(xCoord != currentX || yCoord != currentY){
-
-        // Draw the new square
-        drawSquare(xCoord, yCoord, "lightblue");
-        // Restore the ancient square
-        drawSquare(currentX, currentY, colors[currentGrid[currentY][currentX]]);
-        
-        // Update the new coordinates
-        currentX = xCoord;
-        currentY = yCoord;
-    
-    }   
-    
-})
-
-canvas.addEventListener("click", (p) => {
-    const xCoord = Math.floor(p.offsetX / gridSize);
-    const yCoord = Math.floor(p.offsetY / gridSize);
-
-    // The current color of the tile where you click
-    const currentTileColor = currentGrid[yCoord][xCoord];
-
-    // To fill a tile
+// Fill a tile with the new fill style
+function changeTile(currentFill, currentTileFill, x, y){
     if(currentFill == 1){
 
-        if(currentTileColor == 0) currentGrid[yCoord][xCoord] = 1;
-        else if(currentTileColor == 1) currentGrid[yCoord][xCoord] = 0;
+        if(currentTileFill == 0) currentGrid[y][x] = 1;
+        else if(currentTileFill == 1) currentGrid[y][x] = 0;
       
     // To cross a tile
     } else if(currentFill == 2) {
 
-        if(currentTileColor == 0) currentGrid[yCoord][xCoord] = 2;
-        else if (currentTileColor == 2) currentGrid[yCoord][xCoord] = 0;
+        if(currentTileFill == 0) currentGrid[y][x] = 2;
+        else if (currentTileFill == 2) currentGrid[y][x] = 0;
 
     }
+}
+
+canvas.addEventListener("mousemove", (p) => {
+    // console.log("Mouse moves !");
     
+    const xCoord = Math.floor(p.offsetX / gridSize);
+    const yCoord = Math.floor(p.offsetY / gridSize);
+
+    if(xCoord != currentX || yCoord != currentY){
+        currentX = xCoord;
+        currentY = yCoord;
+        if (mousePressed) {
+
+            // The current color of the tile where you click
+            const currentTileFill = currentGrid[yCoord][xCoord];
+            // Fill the tile
+            changeTile(currentFill, currentTileFill, xCoord, yCoord);
+            // Refill the grid with the correct colors
+            fillGrid();
+
+            // Verifying if the grid is correct
+            verifyGrid();
+        }
+    }   
+    
+});
+
+window.addEventListener("mousedown", () => {
+    mousePressed = true;
+})
+
+canvas.addEventListener("mousedown", (p) => {
+    mousePressed = true;
+
+    const xCoord = Math.floor(p.offsetX / gridSize);
+    const yCoord = Math.floor(p.offsetY / gridSize);
+
+    currentX = xCoord;
+    currentY = yCoord;
+
+    // The current color of the tile where you click
+    const currentTileFill = currentGrid[yCoord][xCoord];
+    // Fill the tile
+    changeTile(currentFill, currentTileFill, xCoord, yCoord);
     // Refill the grid with the correct colors
     fillGrid();
+
+    // Verifying if the grid is correct
+    verifyGrid();
+});
+
+window.addEventListener("mouseup", () => {
+    mousePressed = false;
 })
+
+canvas.addEventListener("mouseenter", () => {
+    mouseIn = true;
+});
+
+canvas.addEventListener("mouseleave", () => {
+    mouseIn = false;
+});
 
 // Handling cross and fill buttons
 let currentFill = 0;
@@ -148,23 +207,20 @@ crossButton.addEventListener("click", () => {
 });
 
 function verifyGrid(){
-    console.log("I verify if you grid is correct ...");
+    console.log("I'm verifying the grid ...");
     for(let i=0 ; i<tilesOnRow ; i++){
         for(let j=0 ; j<tilesOnColumn ; j++){
             const tileToFind = gameGrid[j][i];
             const currentTile = currentGrid[j][i];
             if(tileToFind == 0 && currentTile == 1){
-                console.log("The grid is NOT correct ! Retry !");
                 return false;
             } 
             if(tileToFind == 1 && currentTile !=1){
-                console.log("The grid is NOT correct ! Retry !");
                 return false;
             } 
         }
     }
-    console.log("The grid is correct !!");
-    alert("You won !!")
+    alert("The grid is correct !!");
     return true;
 }
 
@@ -175,6 +231,9 @@ function getLevel(){
         if (this.status == 200 && this.readyState == 4){
 
             let data = JSON.parse(this.responseText);
+
+            if (Object.keys(data).length == 0) alert("The level is not defined yet !");
+            else {
 
             // Updating the dimensions
             tilesOnRow = data.width;
@@ -297,8 +356,8 @@ function getLevel(){
             currentGrid = Array.from(Array(tilesOnColumn), () => new Array(tilesOnRow).fill(0));
 
             // Constructing the grid background
-            drawGrid();
             fillGrid();
+            }
         }
     }
 
