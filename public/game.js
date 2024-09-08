@@ -23,14 +23,16 @@ let cluesOnRows;
 // The current grid for the player
 let currentGrid;
 
-const colors = [
-    "white", // 0 : blank
-    "black", // 1 : full
-    "red",   // 2 : cross
-    "lightblue" // 3 : mouseover
-]
+// Load image of cross
+const crossImage = new Image();
+crossImage.src = "icons/cross.png";
 
-let currentFill = 1;
+const colors = [
+    {"type": "color", data:"white"}, // 0 : blank
+    {"type": "color", data:"black"}, // 1 : full
+    {"type": "image", data:crossImage},   // 2 : cross
+    {"type": "color", data:"lightblue"} // 3 : mouseover
+]
 
 function drawGrid(){
     for(let i=0; i<=tilesOnRow; i++){
@@ -56,12 +58,17 @@ function fillGrid() {
 }
 
 function drawSquare(x, y, color){
-    ctx.strokeStyle = "black";
-    ctx.fillStyle = color;
-    ctx.fillRect(x*gridSize, y*gridSize, gridSize, gridSize);
-    ctx.strokeRect(x*gridSize, y*gridSize, gridSize, gridSize);
+    if(color.type == "color"){
+        ctx.strokeStyle = "black";
+        ctx.fillStyle = color.data;
+        ctx.fillRect(x*gridSize, y*gridSize, gridSize, gridSize);
+        ctx.strokeRect(x*gridSize, y*gridSize, gridSize, gridSize);
+    } else if (color.type == "image"){
+        ctx.drawImage(color.data, x*gridSize, y*gridSize, gridSize, gridSize)
+    }
 }
 
+// Mouse events on the game grid
 let currentX = 0;
 let currentY = 0;
 
@@ -70,7 +77,6 @@ canvas.addEventListener("mousemove", (p) => {
     const yCoord = Math.floor(p.offsetY / gridSize);
 
     if(xCoord != currentX || yCoord != currentY){
-        //console.log(xCoord, yCoord);
 
         // Draw the new square
         drawSquare(xCoord, yCoord, "lightblue");
@@ -106,16 +112,65 @@ canvas.addEventListener("click", (p) => {
 
     }
     
-    console.log(currentGrid);
-    
     // Refill the grid with the correct colors
     fillGrid();
 })
 
+// Handling cross and fill buttons
+let currentFill = 0;
+
+const fillButton = document.getElementById("fill");
+const crossButton = document.getElementById("cross");
+
+// To display correctly the chosen mode
+function updateFillButtonsDisplay() {
+    if (currentFill == 1){
+        fillButton.style.border = "solid 4px yellow";
+        crossButton.style.border = "0px";
+    } else if(currentFill == 2) {
+        fillButton.style.border = "0px";
+        crossButton.style.border = "solid 4px yellow"; 
+    }
+}
+
+fillButton.addEventListener("click", () => {
+    if (currentFill != 1){
+        currentFill = 1;
+        updateFillButtonsDisplay();
+    } 
+});
+
+crossButton.addEventListener("click", () => {
+    if (currentFill != 2){
+        currentFill = 2;
+        updateFillButtonsDisplay()
+    }
+});
+
+function verifyGrid(){
+    console.log("I verify if you grid is correct ...");
+    for(let i=0 ; i<tilesOnRow ; i++){
+        for(let j=0 ; j<tilesOnColumn ; j++){
+            const tileToFind = gameGrid[j][i];
+            const currentTile = currentGrid[j][i];
+            if(tileToFind == 0 && currentTile == 1){
+                console.log("The grid is NOT correct ! Retry !");
+                return false;
+            } 
+            if(tileToFind == 1 && currentTile !=1){
+                console.log("The grid is NOT correct ! Retry !");
+                return false;
+            } 
+        }
+    }
+    console.log("The grid is correct !!");
+    alert("You won !!")
+    return true;
+}
+
+
 // functions to charge the level
 function getLevel(){
-    console.log("I charge the level ...");
-
     xhttp.onreadystatechange = function () {
         if (this.status == 200 && this.readyState == 4){
 
@@ -136,11 +191,8 @@ function getLevel(){
             rowClues.style.height = canvas.height;
             columnClues.style.width = canvas.width;
 
-            console.log("Canvas width and height :", canvas.width, canvas.height);
-
             // Copying the game grid
             gameGrid = data.gameGrid;
-            console.log(gameGrid);
 
             // Computing the clue numbers displayed on the rows and columns
 
@@ -186,23 +238,20 @@ function getLevel(){
                     }
                 }
             }
-            
-            console.log(cluesOnRows);
-            console.log(cluesOnColumns);
 
             // IMPORTANT //
             ///////////////
             // The left of the grid (without clues) is aligned with center. 
             // Here we create an offset to align GRID AND CLUES with center
+
             const maxNbCluesOnColumns = Math.max(...cluesOnColumns.map(arr => arr.length));
             const maxNbCluesOnRows = Math.max(...cluesOnRows.map(arr => arr.length));
 
             const gameContainer = document.getElementById("game-container");
             gameContainer.style.left = Math.floor((maxNbCluesOnRows*gridSize - canvas.width)/2) + "px";
-            gameContainer.style.top = Math.floor(maxNbCluesOnColumns*gridSize/2) + "px";
+            gameContainer.style.top = Math.floor(maxNbCluesOnColumns*gridSize) + "px";
 
             ///////////////
-            // IMPORTANT //
 
             // Creating the clues display
             // for columns (horizontally)
@@ -247,8 +296,6 @@ function getLevel(){
             // Creating the blank current grid
             currentGrid = Array.from(Array(tilesOnColumn), () => new Array(tilesOnRow).fill(0));
 
-            console.log(currentGrid);
-
             // Constructing the grid background
             drawGrid();
             fillGrid();
@@ -260,10 +307,8 @@ function getLevel(){
 }
 
 function getLevelNumber() {
-    console.log("I search for the level number ...");
     xhttp2.onreadystatechange = function () {
         if(this.status == 200 && this.readyState == 4){
-            console.log("I found the level number !");
             document.getElementById("levelNumber").textContent = this.responseText;
         }
     }
