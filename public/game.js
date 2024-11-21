@@ -23,6 +23,10 @@ let cluesOnRows;
 // The current grid for the player
 let currentGrid;
 
+// For final display
+let colorsForFinalGrid;
+let coloredGrid;
+
 // Load image of cross
 const crossImage = new Image();
 crossImage.src = "icons/cross.png";
@@ -77,6 +81,34 @@ function fillGrid() {
         }
     }
     drawRails();
+}
+
+function drawColoredSquare(nb){
+    const x = Math.floor(nb / tilesOnRow);
+    const y = nb % tilesOnRow; 
+    ctx.fillStyle = colorsForFinalGrid[coloredGrid[y][x]];
+    ctx.fillRect(x*gridSize, y*gridSize, gridSize, gridSize);
+}
+
+function fillGridWithColors() {
+    // Wipe the board
+    ctx.fillStyle = "white";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    document.getElementById("column-clues").style.display = "none";
+    document.getElementById("row-clues").style.display = "none";
+
+    let a = [...Array(tilesOnRow*tilesOnColumn).keys()];
+    console.log(a);
+    for (let i = a.length - 1; i > 0; i--) { 
+        const j = Math.floor(Math.random() * (i + 1)); 
+        [a[i], a[j]] = [a[j], a[i]]; 
+    } 
+    let nb = 0;
+    let intervalId = setInterval(() => {
+        drawColoredSquare(a[nb]);
+        nb++;
+        if(nb == a.length) clearInterval(intervalId);
+    }, 20)
 }
 
 function drawSquare(x, y, color){
@@ -219,7 +251,8 @@ function verifyGrid(){
             } 
         }
     }
-    alert("The grid is correct !!");
+    document.getElementById("level").textContent = "WIN !!!"
+    fillGridWithColors();
     return true;
 }
 
@@ -306,7 +339,7 @@ function getLevel(){
             const maxNbCluesOnRows = Math.max(...cluesOnRows.map(arr => arr.length));
 
             const gameContainer = document.getElementById("game-container");
-            gameContainer.style.left = Math.floor((maxNbCluesOnRows*gridSize - canvas.width)/2) + "px";
+            gameContainer.style.left = Math.floor(( - canvas.width)/2) + "px";
             gameContainer.style.top = Math.floor(maxNbCluesOnColumns*gridSize) + "px";
 
             ///////////////
@@ -350,6 +383,10 @@ function getLevel(){
 
                 rowClues.appendChild(clue);
             }
+
+            // Saving information for final display
+            colorsForFinalGrid = data.colorsForFinalGrid;
+            coloredGrid = data.coloredGrid;
 
             // Creating the blank current grid
             currentGrid = Array.from(Array(tilesOnColumn), () => new Array(tilesOnRow).fill(0));
